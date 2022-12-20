@@ -23,6 +23,12 @@ class Line:
     def width(self) -> int:
         return len(self.positions)
 
+    def print(self):
+        for pos in self.positions:
+            char = "." if pos == 0 else "#"
+            print(char, end="")
+        print()
+
     def get_empty() -> 'Line':
         return Line(tuple(0 for _ in range(C_WIDTH)))
 
@@ -139,11 +145,25 @@ class Chamber:
         return len(self.lines)
 
     @property
+    def filled_height(self) -> int:
+        height = len(self.lines)
+        for line in reversed(self.lines):
+            if not line.is_empty:
+                return height
+            height -= 1
+        return 0
+
+    @property
     def width(self) -> int:
         return self.lines[0].width
+    
+    def print(self):
+        for line in reversed(self.lines):
+            line.print()
+        print()
 
 def main():
-    with open("example_input.txt", "r") as f:
+    with open("input.txt", "r") as f:
         lines = [line.rstrip() for line in f.readlines()]
     
     jets = iter(Jets(lines[0]))
@@ -153,7 +173,7 @@ def main():
     for _ in range(2022):
         template = next(shapes)
         chamber.ensure_empty_lines(template.height + V_START_POS)
-        shape = MovingShape(template, H_START_POS, chamber.height - 1)
+        shape = MovingShape(template, H_START_POS, chamber.filled_height + V_START_POS + template.height - 1)
         while True:
             direction = next(jets)
             if shape.can_move(direction, chamber):
@@ -163,6 +183,9 @@ def main():
             else:
                 shape.freeze(chamber)
                 break
+        
+        # chamber.print()
+        # input()
     
     print(sum(1 for line in chamber.lines if not line.is_empty))
 
